@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Math Game</title> <!-- Adjust this text to change the name of the game shown -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+</head>
+
+<body>
+
+  <h1>Welcome to the Maths Game</h1>  <!-- Adjust this text to change the name of the game shown -->
+
+  <p>Enter your details to starts:</p>
+
+  <input type="text" id="studentName" placeholder="Your Name">
+
+  <input type="text" id="studentClass" placeholder="Your Class">
+
+  <button onclick="startGame()">Start Game</button>
+
+
+
+  <div id="game" style="display: none;">
+
+    <h2>Stage <span id="stageNumber"></span>, Level <span id="levelNumber"></span></h2>
+
+    <p id="question"></p>
+
+    <input type="text" id="answer" placeholder="Enter your answer">
+
+    <button onclick="submitAnswer()">Submit</button>
+
+    <p id="feedback"></p>
+
+  </div>
+
+
+
+  <div id="endMessage" style="display: none;">
+
+    <h2>Congratulations, <span id="finalName"></span>!</h2>
+
+    <p>You achieved <span id="finalXP"></span> XP in this game!</p>
+
+    <button onclick="generateExcel()">Download Results</button>
+
+  </div>
+
+
+
+  <script>
+
+    const totalStages = 5; // Change this number to set the total number of stages in the game.
+
+    const questions = { // Change the quotation mark sections below to adjust the questions and answers. The answers are case-sensitive and space-sensitive.
+
+      1: [
+
+    [ // Stage 1: Whole numbers - Recognise, represent and order numbers in the millions (10 XP)
+
+      { question: "Write 3 200 000 in words (all lowercase with spaces between words and no hyphens or commas).", answer: "three million two hundred thousand" },
+
+      { question: "What digit is in the millions place in 5 738 215?", answer: "5" },
+
+      { question: "Arrange 1 542 000, 3 711 500, 800 345 in ascending order.", answer: "800 345, 1 542 000, 3 711 500" },
+
+      { question: "How many zeroes are in 1 million?", answer: "6" },
+
+      { question: "Round 5 432 987 to the nearest million.", answer: "5 000 000" }
+
+    ],
+
+    [ // Stage 1: Whole numbers - Recognise, represent and order numbers in the millions (100 XP)
+
+      { question: "Rewrite 478 356 002 in words (all lowercase with spaces between words and no hyphens or commas).", answer: "four hundred and seventy eight million three hundred and fifty six thousand and two" },
+
+      { question: "Place 1 234 567, 3 658 214, 9 876 543 in descending order (include a comma and space between numbers).", answer: "9 876 543, 3 658 214, 1 234 567" },
+
+      { question: "Rewrite 7 004 500 in word form (all lowercase with spaces between words and no hyphens or commas).", answer: "seven million four thousand five hundred" },
+
+      { question: "How many 100's are in 1 000 000?", answer: "1000" },
+
+      { question: "Round 6 340 295 to the nearest 100,000.", answer: "6 300 000" }
+
+    ],
+
+    [ // Stage 1: Whole numbers - Recognise, represent and order numbers in the millions (1000 XP)
+
+      { question: "What is 9 876 000 ÷ 1 000 000?", answer: "9.876" },
+
+      { question: "Write the following as a number- 7 billion nine hundred and thirteen million forty five thousand and four.", answer: "7 913 045 004" },
+
+      { question: "Order the following numbers in descending order (place a comma and space between each number): 90 870 123, 9 807 123, 98 123, 987 000 123 000.", answer: "98 123, 9 807 123, 90 870 123, 987 000 123 000" },
+
+      { question: "How many times bigger is the value of the 9 in 9 876 543 to the 9 in 3 210 987 (number only)?", answer: "10 000" },
+
+      { question: "Write words for the number 8  302 956 745 321 (all lowercase with spaces between words and no hyphens or commas).", answer: "eight trillion three hundred and two billion nine hundred and fifty six million seven hundred and forty five thousand three hundred and twenty one" }
+
+    ]
+
+  ],
+
+  2: [
+
+    [ // Stage 2: Whole numbers - Locate and represent integers on a number line (10 XP)
+
+      { question: "What number immediately comes before -4 on a number line?", answer: "-5" },
+
+      { question: "Which number is positioned furthest right on a number line -3 or -15.", answer: "-3" },
+
+      { question: "Identify the midpoint between -10 and 0.", answer: "-5" },
+
+      { question: "What number comes before -7?", answer: "-6" },
+
+      { question: "Identify the largest number: -5, 0, -8.", answer: "0" }
+
+    ],
+
+    [ // Stage 2: Whole numbers - Locate and represent integers on a number line (100 XP)
+
+      { question: "Write the integer that is 8 units less than +6.", answer: "-2" },
+
+      { question: "Order 0, -15, +10, -5 in ascending order using commas and a space to separate numbers.", answer: "-15, -5, 0, +10" },
+
+      { question: "What is the difference (number) between -3 + +4?", answer: "7" },
+
+      { question: "Reflect -8 across zero.", answer: "8" },
+
+      { question: "What is the difference between -11 and +1 ?", answer: "12" }
+
+    ],
+
+    [ // Stage 2: Whole numbers - Locate and represent integers on a number line (1000 XP)
+
+      { question: "Solve: What is the sum of -6, +8, -3, +12?", answer: "11" },
+
+      { question: "What is the difference (in number) between -32 and +54?", answer: "22" },
+
+      { question: "If x - (-7) = 5, what is x?", answer: "-2" },
+
+      { question: "Solve (+21) + (-47).", answer: "-26" },
+
+      { question: "Solve (-21) - (-47).", answer: "68" }
+
+    ]
+
+  ],
+
+  3: [
+
+    [ // Stage 3: Whole numbers - Apply place value to partition, regroup and rename numbers (10 XP)
+
+      { question: "Partition 7 430 into thousands, hundreds, tens, and ones (include space before and after +).", answer: "7,000 + 400 + 30" },
+
+      { question: "How many hundreds in 6500?", answer: "65" },
+
+      { question: "How many hundreds are in 1 450 300 (number only).", answer: "14 503" },
+
+      { question: "How many thousands are in 25,400?", answer: "25" },
+
+      { question: "Write the number for 300 + 4,000 + 20 + 5.", answer: "4325" }
+
+    ],
+
+    [ // Stage 3: Whole numbers - Apply place value to partition, regroup and rename numbers (100 XP)
+
+      { question: "Partition 8 670 312 into standard form (include space before and after +).", answer: "8 000 000 + 600 000 + 70 000 + 300 + 10 + 2" },
+
+      { question: "How many hundreds in the number 56 000 (number only)?", answer: "560" },
+
+      { question: "Round 327 854 to the nearest 10 000.", answer: "330 000" },
+
+      { question: "Round 775 435 to the nearest 100 000.", answer: "800 000" },
+
+      { question: "Write the number for 23 million 45 thousand and 16.", answer: "23 045 016" }
+
+    ],
+
+    [ // Stage 3: Whole numbers - Apply place value to partition, regroup and rename numbers (1000 XP)
+
+      { question: "How many thousands are in 1 000 000 000?", answer: "1 000 000" },
+
+      { question: "Partition 123 456 789 in standard form.", answer: "100 000 000 + 20 000 000 + 3 000 000 + 400 000 + 50 000 + 6000 + 700 + 80 + 9" },
+
+      { question: "How many millions are in 2 billion?", answer: "2000" },
+
+      { question: "Write the number for 97 trillion 815 billion 704 million and 23.", answer: "97 815 704 000 023" },
+
+      { question: "Add 543 290 + 456 987.", answer: "1 000 277" }
+
+    ]
+
+  ],
+
+  4: [
+
+    [ // Stage 4: Decimals and percentages - Recognise extended place value (10 XP)
+
+      { question: "Identify the tenths place in 42.6.", answer: "6" },
+
+      { question: "Convert 0.02 to fraction form.", answer: "2/100" },
+
+      { question: "Write 0.735 as a fraction.", answer: "735/1000" },
+
+      { question: "Which is smaller: 0.3 or 0.03?", answer: "0.03" },
+
+      { question: "What is the value of 4 in 0.4?", answer: "4 tenths" }
+
+    ],
+
+    [ // Stage 4: Decimals and percentages - Recognise extended place value (100 XP)
+
+      { question: "Partition 56.098 into tenths, hundredths, and thousandths. Write your response with whole numbers and decimals", answer: "50 + 6 + 0.09 + 0.008" },
+
+      { question: "Write 9.405 in expanded form using decimals.", answer: "9 + 0.4 + 0.005" },
+
+      { question: "Round 15.763 to two decimal places.", answer: "15.76" },
+
+      { question: "Compare 0.67 and 0.607. Which is greater?", answer: "0.67" },
+
+      { question: "Multiply 0.008 × 1000.", answer: "8" }
+
+    ],
+
+    [ // Stage 4: Decimals and percentages - Recognise extended place value (1000 XP)
+
+      { question: "Place 0.903, 0.39, 0.093, and 0.9 in descending order.", answer: "0.903, 0.9, 0.39, 0.093" },
+
+      { question: "Solve: 45.6 + 0.075.", answer: "45.675" },
+
+      { question: "Multiply 0.25 × 1000.", answer: "250" },
+
+      { question: "Write 3.5% as a decimal", answer: "0.035" },
+
+      { question: "Write 72.4% as a decimal.", answer: "0.724" }
+
+    ]
+
+  ],
+
+  5: [
+
+    [ // Stage 5: Decimals and percentages - Compare, order and represent decimals (10 XP)
+
+      { question: "Arrange 0.3, 0.12, 0.45 in ascending order (add comma and space between each).", answer: "0.12, 0.3, 0.45" },
+
+      { question: "Write 10% as a decimal.", answer: "0.1" },
+
+      { question: "Round 96.07 to one decimal place.", answer: "96.1" },
+
+      { question: "Which is larger: 0.7 or 0.68?", answer: "0.7" },
+
+      { question: "Round 25.765 to two decimal places.", answer: "25.77" }
+
+    ],
+
+    [ // Stage 5: Decimals and percentages - Compare, order, and represent decimals (100 XP)
+
+      { question: "Write 0.25 as a percentage (include % in answer).", answer: "25%" },
+
+      { question: "Compare 9.470 and 9.407. Which is smallest?.", answer: "9.407" },
+
+      { question: "Round 5.7895 to three decimal places.", answer: "5.790" },
+
+      { question: "Write 62% as a decimal", answer: "0.62" },
+
+      { question: "Arrange 0.3, 0.345, 0.359 in ascending order(add comma and space between each).", answer: "0.3, 0.345, 0.359" }
+
+    ],
+
+    [ // Stage 5: Decimals and percentages - Compare, order, and represent decimals (1000 XP)
+
+      { question: "Arrange the following decimals in descending order: 0.045, 0.975, 0.795, 0.35, 0.004.", answer: "0.975, 0.795, 0.35, 0.045, 0.004" },
+
+      { question: "Write 28.75% as a decimal.", answer: "0.2875" },
+
+      { question: "Write the % representation for 137/1000 (include % in answer).", answer: "13.7%" },
+
+      { question: "Compare 45.6%, 0.0456 and 4.56. Which is largest?", answer: "4.56" },
+
+      { question: "Divide 1.34 ÷ 100. Write your answer as a percentage.", answer: "1.34%" }
+
+    ]
+
+  ]
+
+    };
+
+
+
+    const XP_VALUES = { 1: 10, 2: 20, 3: 30, 4: 40, 5: 50 };
+
+    let currentStage = 1;
+
+    let currentLevel = 1;
+
+    let questionIndex = 0;
+
+    let correctAnswers = 0;
+
+    let consecutiveCorrect = 0;
+
+    let stageXP = [0, 0, 0, 0, 0];
+
+    let allAnswers = [];
+
+    let studentName = "";
+
+    let studentClass = "";
+
+
+
+    function startGame() {
+
+      studentName = document.getElementById("studentName").value;
+
+      studentClass = document.getElementById("studentClass").value;
+
+      if (!studentName.trim() || !studentClass.trim()) {
+
+        alert("Please enter your name and class!");
+
+        return;
+
+      }
+
+      document.getElementById("studentName").style.display = "none";
+
+      document.getElementById("studentClass").style.display = "none";
+
+      document.getElementById("game").style.display = "block";
+
+      loadQuestion();
+
+    }
+
+
+
+    function loadQuestion() {
+
+      document.getElementById("stageNumber").innerText = currentStage;
+
+      document.getElementById("levelNumber").innerText = currentLevel;
+
+      const questionSet = questions[currentStage][currentLevel - 1];
+
+      const question = questionSet[questionIndex];
+
+      document.getElementById("question").innerText = `Question ${questionIndex + 1}: ${question.question}`;
+
+      document.getElementById("answer").value = "";
+
+      document.getElementById("feedback").innerText = "";
+
+    }
+
+
+
+    function submitAnswer() {
+
+      const userAnswer = document.getElementById("answer").value.trim();
+
+      if (userAnswer === "") {
+
+        alert("Please enter a valid answer!");
+
+        return;
+
+      }
+
+      const questionSet = questions[currentStage][currentLevel - 1];
+
+      const correctAnswer = questionSet[questionIndex].answer;
+
+      const isCorrect = userAnswer === correctAnswer;
+
+
+
+      allAnswers.push({
+
+        Stage: currentStage,
+
+        Level: currentLevel,
+
+        Question: questionSet[questionIndex].question,
+
+        Answer: userAnswer,
+
+        Correct: isCorrect ? "Correct" : "Incorrect"
+
+      });
+
+
+
+      if (isCorrect) {
+
+        correctAnswers++;
+
+        consecutiveCorrect++;
+
+      } else {
+
+        consecutiveCorrect = 0;
+
+      }
+
+
+
+      // Move to the next level if the first two questions are correct
+
+      if (questionIndex < 2 && consecutiveCorrect === 2) {
+
+        stageXP[currentStage - 1] = Math.max(stageXP[currentStage - 1], XP_VALUES[currentLevel]);
+
+        if (currentLevel < 3) {
+
+          currentLevel++;
+
+          questionIndex = 0;
+
+          correctAnswers = 0;
+
+          consecutiveCorrect = 0;
+
+          loadQuestion();
+
+          return;
+
+        }
+
+      }
+
+
+
+      questionIndex++;
+
+
+
+      if (questionIndex === 5) {
+
+        handleLevelEnd();
+
+      } else {
+
+        loadQuestion();
+
+      }
+
+    }
+
+
+
+    function handleLevelEnd() {
+
+      if (correctAnswers >= 4) {
+
+        stageXP[currentStage - 1] = Math.max(stageXP[currentStage - 1], XP_VALUES[currentLevel]);
+
+        if (currentLevel === 3 && (correctAnswers === 4 || correctAnswers === 5)) {
+
+          stageXP[currentStage - 1] += 5;
+
+        }
+
+      }
+
+
+
+      if (correctAnswers >= 4 && currentLevel < 3) {
+
+        currentLevel++;
+
+        questionIndex = 0;
+
+        correctAnswers = 0;
+
+        consecutiveCorrect = 0;
+
+        loadQuestion();
+
+      } else {
+
+        handleStageEnd();
+
+      }
+
+    }
+
+
+
+    function handleStageEnd() {
+
+      alert(`Congratulations - You have achieved ${stageXP[currentStage - 1]} XP in Stage ${currentStage}.`);
+
+      if (currentStage < totalStages) {
+
+        currentStage++;
+
+        currentLevel = 1;
+
+        questionIndex = 0;
+
+        correctAnswers = 0;
+
+        consecutiveCorrect = 0;
+
+        loadQuestion();
+
+      } else {
+
+        endGame();
+
+      }
+
+    }
+
+
+
+    function endGame() {
+
+      document.getElementById("game").style.display = "none";
+
+      document.getElementById("endMessage").style.display = "block";
+
+      document.getElementById("finalName").innerText = studentName;
+
+      const totalXP = stageXP.reduce((a, b) => a + b, 0);
+
+      document.getElementById("finalXP").innerText = totalXP;
+
+    }
+
+
+
+    function generateExcel() {
+
+      const workbook = XLSX.utils.book_new();
+
+      const xpSheet = XLSX.utils.aoa_to_sheet([
+
+        ["Stage", "XP Earned"],
+
+        [1, stageXP[0]],
+
+        [2, stageXP[1]],
+
+        [3, stageXP[2]],
+
+        [4, stageXP[3]],
+
+        [5, stageXP[4]]
+
+      ]);
+
+      XLSX.utils.book_append_sheet(workbook, xpSheet, "XP Summary");
+
+
+
+      const questionData = allAnswers.map(a => [a.Stage, a.Level, a.Question, a.Answer, a.Correct]);
+
+      const questionSheet = XLSX.utils.aoa_to_sheet([
+
+        ["Stage", "Level", "Question", "Answer", "Correct/Incorrect"],
+
+        ...questionData
+
+      ]);
+
+      XLSX.utils.book_append_sheet(workbook, questionSheet, "Answers Summary");
+
+
+
+      XLSX.writeFile(workbook, `${studentName}_${studentClass}_MathGameResults.xlsx`);
+
+    }
+
+  </script>
+
+</body>
+
+</html>
